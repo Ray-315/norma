@@ -1,0 +1,16 @@
+{
+  "id": "paper_fidelity",
+  "limitationIterations": 16,
+  "ideaRounds": 4,
+  "successThreshold": 4,
+  "engineeringRetries": 2,
+  "ablationRefinements": 1,
+  "peerRounds": 2,
+  "peerEarlyStopScore": 8,
+  "metaRefinements": 1,
+  "noveltyReferences": 2,
+  "seedCount": null,
+  "initialCandidateCount": null,
+  "source": "https://arxiv.org/html/2609.19644v1",
+  "implementationNotes": "Seed pool size and initial batch require explicit project configuration. Four rounds is implemented as four total rounds. Codex replaces original model runtimes; no performance equivalence is asserted."
+}

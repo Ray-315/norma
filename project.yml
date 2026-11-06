@@ -1,0 +1,70 @@
+name: NORMA
+options:
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_HARDENED_RUNTIME: YES
+    GENERATE_INFOPLIST_FILE: YES
+packages:
+  NORMA:
+    path: .
+targets:
+  NORMA:
+    type: application
+    platform: macOS
+    sources:
+      - path: apps/NORMAApp
+        excludes: ["*.plist"]
+      - path: workers/experiment-runner/worker.py
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.norma.desktop
+        INFOPLIST_KEY_CFBundleDisplayName: NORMA
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
+    dependencies:
+      - package: NORMA
+        product: NORMAUI
+      - package: NORMA
+        product: NORMAClient
+      - target: NORMAResearchService
+        embed: false
+    postBuildScripts:
+      - name: Embed research service
+        script: |
+          mkdir -p "$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchAgents"
+          cp "$SRCROOT/apps/NORMAApp/app.norma.research.plist" "$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchAgents/"
+          cp "$BUILT_PRODUCTS_DIR/NORMAResearchService" "$TARGET_BUILD_DIR/$EXECUTABLE_FOLDER_PATH/NORMAResearchService"
+        basedOnDependencyAnalysis: false
+  NORMAResearchService:
+    type: tool
+    platform: macOS
+    sources: [apps/NORMAResearchService]
+    dependencies:
+      - package: NORMA
+        product: ResearchKernel
+      - package: NORMA
+        product: ResearchContracts
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.norma.research
+  NORMAUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources: [tests/end-to-end]
+    dependencies:
+      - target: NORMA
+schemes:
+  NORMA:
+    build:
+      targets:
+        NORMA: all
+        NORMAResearchService: all
+    test:
+      targets: [NORMAUITests]

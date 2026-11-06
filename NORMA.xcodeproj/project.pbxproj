@@ -1,0 +1,622 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		13726464B29EC700AFC50A7F /* NORMAUI in Frameworks */ = {isa = PBXBuildFile; productRef = A69CC5967B93A79CF2B88595 /* NORMAUI */; };
+		189D251169890D1769B72C34 /* NORMAApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BED5E8080ECEA2B0C97C58 /* NORMAApp.swift */; };
+		8226E181D67C1D95CF086483 /* ResearchContracts in Frameworks */ = {isa = PBXBuildFile; productRef = D298676C2F910836F78C5202 /* ResearchContracts */; };
+		973E5866FEA89787EE9EE4A4 /* NORMAUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25836E03C5F859506C2FE3A9 /* NORMAUITests.swift */; };
+		D104A7BB2059EA8C319889FC /* ResearchKernel in Frameworks */ = {isa = PBXBuildFile; productRef = EEA5E402A0F80D1CAA2BD803 /* ResearchKernel */; };
+		E00960120837CF45C7217852 /* worker.py in Resources */ = {isa = PBXBuildFile; fileRef = B56BEEA42A31FB37EEEB6B11 /* worker.py */; };
+		EF6C29B9820A0B2C439AED39 /* NORMAClient in Frameworks */ = {isa = PBXBuildFile; productRef = 43D6AB13DA327FEE006C2E4A /* NORMAClient */; };
+		FC7081347BEF802F55464558 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = E60CFFEA2C0484DAF5F0BD1E /* main.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0619ED0106361B928FBBF2B0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EF597F58F4CB6C5DE4ECF9EE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C1CD122ED7489CA36D1530DE;
+			remoteInfo = NORMA;
+		};
+		7DA5BDFB98846067CF2C8999 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EF597F58F4CB6C5DE4ECF9EE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F55317F76F408A2011A8572E;
+			remoteInfo = NORMAResearchService;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		25836E03C5F859506C2FE3A9 /* NORMAUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NORMAUITests.swift; sourceTree = "<group>"; };
+		8E55928E50C007C8E1E2B104 /* NORMAUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NORMAUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9658A9DEF7A51836DE6E6706 /* Norma */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Norma; path = .; sourceTree = SOURCE_ROOT; };
+		97BED5E8080ECEA2B0C97C58 /* NORMAApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NORMAApp.swift; sourceTree = "<group>"; };
+		A689D48788E73078B0B603C1 /* NORMAResearchService */ = {isa = PBXFileReference; includeInIndex = 0; path = NORMAResearchService; sourceTree = BUILT_PRODUCTS_DIR; };
+		AE753088266B7938A12165E9 /* NORMA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NORMA.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B56BEEA42A31FB37EEEB6B11 /* worker.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = worker.py; sourceTree = "<group>"; };
+		E60CFFEA2C0484DAF5F0BD1E /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A2B59D92BA44F5882ADD9290 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D104A7BB2059EA8C319889FC /* ResearchKernel in Frameworks */,
+				8226E181D67C1D95CF086483 /* ResearchContracts in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D0D66699A3C1BD5559997CDD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				13726464B29EC700AFC50A7F /* NORMAUI in Frameworks */,
+				EF6C29B9820A0B2C439AED39 /* NORMAClient in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		05333EA887C143D7534F4E8F /* tests */ = {
+			isa = PBXGroup;
+			children = (
+				7F876382DD3348BE3DA110D8 /* end-to-end */,
+			);
+			path = tests;
+			sourceTree = "<group>";
+		};
+		1858EE7DA83DE6E04782E0BD = {
+			isa = PBXGroup;
+			children = (
+				F711A87863A909FD6319C89E /* apps */,
+				AE81B8CECBF9042AE9604AB1 /* Packages */,
+				05333EA887C143D7534F4E8F /* tests */,
+				F689C0558B1FBE18366E2600 /* workers */,
+				E64A6AF13D4893E605CD45E2 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		23C6CBBC152B0230C819EEDE /* experiment-runner */ = {
+			isa = PBXGroup;
+			children = (
+				B56BEEA42A31FB37EEEB6B11 /* worker.py */,
+			);
+			path = "experiment-runner";
+			sourceTree = "<group>";
+		};
+		26C48D2C6E2AC2867B06928A /* NORMAApp */ = {
+			isa = PBXGroup;
+			children = (
+				97BED5E8080ECEA2B0C97C58 /* NORMAApp.swift */,
+			);
+			path = NORMAApp;
+			sourceTree = "<group>";
+		};
+		761FC8A89094FCC2911142F4 /* NORMAResearchService */ = {
+			isa = PBXGroup;
+			children = (
+				E60CFFEA2C0484DAF5F0BD1E /* main.swift */,
+			);
+			path = NORMAResearchService;
+			sourceTree = "<group>";
+		};
+		7F876382DD3348BE3DA110D8 /* end-to-end */ = {
+			isa = PBXGroup;
+			children = (
+				25836E03C5F859506C2FE3A9 /* NORMAUITests.swift */,
+			);
+			path = "end-to-end";
+			sourceTree = "<group>";
+		};
+		AE81B8CECBF9042AE9604AB1 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				9658A9DEF7A51836DE6E6706 /* Norma */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+		E64A6AF13D4893E605CD45E2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AE753088266B7938A12165E9 /* NORMA.app */,
+				A689D48788E73078B0B603C1 /* NORMAResearchService */,
+				8E55928E50C007C8E1E2B104 /* NORMAUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F689C0558B1FBE18366E2600 /* workers */ = {
+			isa = PBXGroup;
+			children = (
+				23C6CBBC152B0230C819EEDE /* experiment-runner */,
+			);
+			path = workers;
+			sourceTree = "<group>";
+		};
+		F711A87863A909FD6319C89E /* apps */ = {
+			isa = PBXGroup;
+			children = (
+				26C48D2C6E2AC2867B06928A /* NORMAApp */,
+				761FC8A89094FCC2911142F4 /* NORMAResearchService */,
+			);
+			path = apps;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		593015D3C9BE29C6FB0F9A58 /* NORMAUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1C036DADF0AA073B2F8D4E18 /* Build configuration list for PBXNativeTarget "NORMAUITests" */;
+			buildPhases = (
+				B9F630524A1B4BAA606E2C7E /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8595CD6DF15CE3F0E74C0ABB /* PBXTargetDependency */,
+			);
+			name = NORMAUITests;
+			packageProductDependencies = (
+			);
+			productName = NORMAUITests;
+			productReference = 8E55928E50C007C8E1E2B104 /* NORMAUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		C1CD122ED7489CA36D1530DE /* NORMA */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 937FF38E08C8961E5BA75D46 /* Build configuration list for PBXNativeTarget "NORMA" */;
+			buildPhases = (
+				7C224AE3B70903E24C898923 /* Sources */,
+				FAC5459D539443008485ADD8 /* Resources */,
+				D0D66699A3C1BD5559997CDD /* Frameworks */,
+				CE61E2B6E76B0689A57B98AD /* Embed research service */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F5C47A28119E913114633008 /* PBXTargetDependency */,
+			);
+			name = NORMA;
+			packageProductDependencies = (
+				A69CC5967B93A79CF2B88595 /* NORMAUI */,
+				43D6AB13DA327FEE006C2E4A /* NORMAClient */,
+			);
+			productName = NORMA;
+			productReference = AE753088266B7938A12165E9 /* NORMA.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F55317F76F408A2011A8572E /* NORMAResearchService */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ED134563DD22E45118B24355 /* Build configuration list for PBXNativeTarget "NORMAResearchService" */;
+			buildPhases = (
+				EA51D877D2609BE8D4F8DE8E /* Sources */,
+				A2B59D92BA44F5882ADD9290 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NORMAResearchService;
+			packageProductDependencies = (
+				EEA5E402A0F80D1CAA2BD803 /* ResearchKernel */,
+				D298676C2F910836F78C5202 /* ResearchContracts */,
+			);
+			productName = NORMAResearchService;
+			productReference = A689D48788E73078B0B603C1 /* NORMAResearchService */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		EF597F58F4CB6C5DE4ECF9EE /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					593015D3C9BE29C6FB0F9A58 = {
+						ProvisioningStyle = Manual;
+						TestTargetID = C1CD122ED7489CA36D1530DE;
+					};
+					C1CD122ED7489CA36D1530DE = {
+						ProvisioningStyle = Manual;
+					};
+					F55317F76F408A2011A8572E = {
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = 5302EC6273F64D7846B63865 /* Build configuration list for PBXProject "NORMA" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 1858EE7DA83DE6E04782E0BD;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B5D8777B870C7F73FFB0BE00 /* XCLocalSwiftPackageReference "." */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = E64A6AF13D4893E605CD45E2 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C1CD122ED7489CA36D1530DE /* NORMA */,
+				F55317F76F408A2011A8572E /* NORMAResearchService */,
+				593015D3C9BE29C6FB0F9A58 /* NORMAUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FAC5459D539443008485ADD8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E00960120837CF45C7217852 /* worker.py in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		CE61E2B6E76B0689A57B98AD /* Embed research service */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed research service";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "mkdir -p \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchAgents\"\ncp \"$SRCROOT/apps/NORMAApp/app.norma.research.plist\" \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchAgents/\"\ncp \"$BUILT_PRODUCTS_DIR/NORMAResearchService\" \"$TARGET_BUILD_DIR/$EXECUTABLE_FOLDER_PATH/NORMAResearchService\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7C224AE3B70903E24C898923 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				189D251169890D1769B72C34 /* NORMAApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B9F630524A1B4BAA606E2C7E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				973E5866FEA89787EE9EE4A4 /* NORMAUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EA51D877D2609BE8D4F8DE8E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FC7081347BEF802F55464558 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8595CD6DF15CE3F0E74C0ABB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C1CD122ED7489CA36D1530DE /* NORMA */;
+			targetProxy = 0619ED0106361B928FBBF2B0 /* PBXContainerItemProxy */;
+		};
+		F5C47A28119E913114633008 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F55317F76F408A2011A8572E /* NORMAResearchService */;
+			targetProxy = 7DA5BDFB98846067CF2C8999 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		29049C629BABFC1EDE4E81F2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.norma.research;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		2F33A88E11AAF39539EFCE7E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				SDKROOT = macosx;
+				TEST_TARGET_NAME = NORMA;
+			};
+			name = Release;
+		};
+		42F8F2D7CBAF5FFC8426A2ED /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.norma.research;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		5D74CDAB3413E6E560F0DA6E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				SDKROOT = macosx;
+				TEST_TARGET_NAME = NORMA;
+			};
+			name = Debug;
+		};
+		9465149CA55382C9648B9B77 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		D77EDA43CAE816AA84B4D1B0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		EB4097DE92B3783C6AB2E738 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = NORMA;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.norma.desktop;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		F587EFF52681241F5EC3F65A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = NORMA;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.norma.desktop;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1C036DADF0AA073B2F8D4E18 /* Build configuration list for PBXNativeTarget "NORMAUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5D74CDAB3413E6E560F0DA6E /* Debug */,
+				2F33A88E11AAF39539EFCE7E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		5302EC6273F64D7846B63865 /* Build configuration list for PBXProject "NORMA" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D77EDA43CAE816AA84B4D1B0 /* Debug */,
+				9465149CA55382C9648B9B77 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		937FF38E08C8961E5BA75D46 /* Build configuration list for PBXNativeTarget "NORMA" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F587EFF52681241F5EC3F65A /* Debug */,
+				EB4097DE92B3783C6AB2E738 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		ED134563DD22E45118B24355 /* Build configuration list for PBXNativeTarget "NORMAResearchService" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				42F8F2D7CBAF5FFC8426A2ED /* Debug */,
+				29049C629BABFC1EDE4E81F2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		B5D8777B870C7F73FFB0BE00 /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		43D6AB13DA327FEE006C2E4A /* NORMAClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NORMAClient;
+		};
+		A69CC5967B93A79CF2B88595 /* NORMAUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NORMAUI;
+		};
+		D298676C2F910836F78C5202 /* ResearchContracts */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ResearchContracts;
+		};
+		EEA5E402A0F80D1CAA2BD803 /* ResearchKernel */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ResearchKernel;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = EF597F58F4CB6C5DE4ECF9EE /* Project object */;
+}
