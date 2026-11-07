@@ -41,7 +41,7 @@ public enum OperationState: String, Codable, Sendable {
     case ready, queued, running, waitingApproval, waitingAuth, waitingResource, paused, cancelPending, cancelled, failed, unknown, succeeded
     public var occupiesSlot: Bool { self == .running || self == .cancelPending || self == .unknown }
 }
-public enum ResearchOutcome: String, Codable, Sendable { case noCandidate, noContribution, priorBest, unresolvedReview, budgetExhausted, integrityFailed, verified, smokeVerified }
+public enum ResearchOutcome: String, Codable, Sendable { case noCandidate, noContribution, priorBest, unresolvedReview, budgetExhausted, integrityFailed, verified, smokeVerified, knownProblemVerified }
 public enum Role: String, Codable, CaseIterable, Sendable {
     case limitationExtractor, limitationVerifier, seedGenerator, noveltyChecker, evolver
     case baselineCoder, subsetCoder, subsetCritic, subsetEngineer, fullSetCoder, fullSetCritic, fullSetEngineer

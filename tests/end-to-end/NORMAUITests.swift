@@ -10,6 +10,7 @@ final class NORMAUITests: XCTestCase {
         let before = app.windows.firstMatch.frame
         toggle.click(); toggle.click()
         XCTAssertEqual(app.windows.firstMatch.frame, before)
+        app.buttons["nav.workspace"].click()
         app.buttons["inspector.toggle"].click()
         app.buttons["inspector.toggle"].click()
         app.terminate()

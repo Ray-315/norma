@@ -34,8 +34,8 @@ public enum ResearchArchive {
         guard state.exportReady, !state.manuscript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw NormaError.forbidden("Export requires verified I1–I4, meta acceptance and explicit confirmation") }
         let evidence = try await database.artifacts(state.id)
         let edges = try await database.edges(state.id)
-        guard !state.runs.isEmpty, state.runs.allSatisfy({ $0.state == .succeeded }) else { throw NormaError.forbidden("Unresolved experiment evidence") }
-        for run in state.runs {
+        guard state.runs.contains(where: { $0.state == .succeeded }), state.runs.allSatisfy({ [.succeeded, .failed, .cancelled].contains($0.state) }) else { throw NormaError.forbidden("Unresolved experiment evidence") }
+        for run in state.runs where run.state == .succeeded {
             guard let metricHash = run.artifactHash, evidence.contains(where: { $0.hash == metricHash && $0.kind == .metric }) else { throw NormaError.invalid("Missing metric artifact") }
             let inputs = Set(edges.filter { $0.sourceHash == metricHash && $0.relation == "derivedFrom" }.map(\.targetHash))
             guard inputs.isSuperset(of: [run.codeHash, run.dataHash, run.protocolHash]), evidence.contains(where: { $0.kind == .environment && inputs.contains($0.hash) }) else { throw NormaError.invalid("Incomplete metric provenance") }

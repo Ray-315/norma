@@ -6,6 +6,7 @@ public actor JSONLTransport {
     private var input: FileHandle?
     private var buffer = Data()
     private var serial = 0
+    private var generation = UUID()
     private var pending: [String: CheckedContinuation<JSONValue, Error>] = [:]
     private var subscribers: [UUID: AsyncStream<JSONValue>.Continuation] = [:]
     public var isRunning: Bool { process?.isRunning == true }
@@ -22,12 +23,19 @@ public actor JSONLTransport {
         env["CODEX_HOME"] = home.path; p.environment = env; p.currentDirectoryURL = home
         let out = Pipe(), stdin = Pipe()
         p.standardOutput = out; p.standardInput = stdin; p.standardError = FileHandle.nullDevice
-        out.fileHandleForReading.readabilityHandler = { [weak self] handle in
-            let bytes = handle.availableData
-            Task { await self?.receive(bytes) }
-        }
-        p.terminationHandler = { [weak self] _ in Task { await self?.failed() } }
         try p.run(); process = p; input = stdin.fileHandleForWriting
+        let identity = UUID(); generation = identity
+        let reader = out.fileHandleForReading
+        try out.fileHandleForWriting.close()
+        // One reader preserves wire ordering across chunks. Independent Tasks per readability
+        // callback could deliver turn/completed before the preceding token-usage notification.
+        Task.detached { [weak self] in
+            while true {
+                let bytes = reader.availableData
+                await self?.receive(bytes, generation: identity)
+                if bytes.isEmpty { break }
+            }
+        }
         do {
             _ = try await request("initialize", params: .object([
                 "clientInfo": .object(["name": .string("norma"), "version": .string("0.1.0")]),
@@ -60,7 +68,8 @@ public actor JSONLTransport {
         guard let input else { throw NormaError.unavailable("Codex stdin closed") }
         try input.write(contentsOf: data)
     }
-    private func receive(_ data: Data) {
+    private func receive(_ data: Data, generation identity: UUID) {
+        guard generation == identity else { return }
         guard !data.isEmpty else { failed(); return }
         buffer.append(data)
         guard buffer.count <= 16 * 1024 * 1024 else { stop(); return }
@@ -86,6 +95,7 @@ public actor JSONLTransport {
         for subscriber in subscribers.values { subscriber.finish() }; subscribers.removeAll()
     }
     public func stop() {
+        generation = UUID()
         process?.terminate(); input = nil; buffer.removeAll(); failed(); process = nil
     }
 }

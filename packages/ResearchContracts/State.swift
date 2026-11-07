@@ -19,6 +19,9 @@ public struct AuditEvent: Codable, Sendable, Identifiable {
 }
 public struct ReviewRecord: Codable, Sendable, Identifiable {
     public var id = UUID(); public var role: Role; public var text: String; public var score: Double?; public var evidenceIDs: [UUID]
+    public init(role: Role, text: String, score: Double?, evidenceIDs: [UUID]) {
+        self.role = role; self.text = text; self.score = score; self.evidenceIDs = evidenceIDs
+    }
 }
 public struct ResearchSnapshot: Codable, Sendable, Identifiable {
     public var id: UUID { contract.id }; public var contract: ResearchContract; public var revision = 0
@@ -28,10 +31,13 @@ public struct ResearchSnapshot: Codable, Sendable, Identifiable {
     public var preflight: TargetPreflightReport?; public var events: [AuditEvent] = []; public var eventSequence: Int64 = 0
     public var confirmedPlanHash: String?
     public var selectedTargetID: String?
+    public var sources: [ResearchSource]?
+    public var tokenUsage: TokenUsageSummary?
+    public var autonomy: AutonomousSession?
     public var modelCalls = 0; public var reservedRuns = 0; public var metaAccepted = false; public var exportConfirmed = false
     public var manuscript = ""; public var lastError: String?
     public var exportReady: Bool {
-        phase == .finished && operation == .succeeded && outcome == .verified && metaAccepted && exportConfirmed &&
+        phase == .finished && operation == .succeeded && (outcome == .verified || outcome == .knownProblemVerified) && metaAccepted && exportConfirmed &&
         integrity.count == 4 && Set(integrity.map(\.id)) == Set(["I1", "I2", "I3", "I4"]) && integrity.allSatisfy { $0.status == .pass }
     }
     public init(contract: ResearchContract) { self.contract = contract }
@@ -62,6 +68,7 @@ public struct AgentCheckpoint: Codable, Sendable, Identifiable {
     public var id: UUID; public var researchID: UUID; public var role: Role; public var model: String
     public var threadID: String?; public var turnID: String?; public var state: OperationState
     public var result: AgentResult?
+    public var tokenUsage: TokenUsage?
     public init(id: UUID, researchID: UUID, role: Role, model: String, threadID: String? = nil, turnID: String? = nil, state: OperationState) {
         self.id = id; self.researchID = researchID; self.role = role; self.model = model
         self.threadID = threadID; self.turnID = turnID; self.state = state

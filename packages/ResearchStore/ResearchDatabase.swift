@@ -126,7 +126,9 @@ public actor ResearchDatabase {
             let old = try Codec.decode(AgentCheckpoint.self, from: data)
             guard old.researchID == checkpoint.researchID, old.role == checkpoint.role, old.model == checkpoint.model,
                   old.threadID == nil || old.threadID == checkpoint.threadID else { throw NormaError.forbidden("Invocation checkpoint identity changed") }
-            try db.execute(sql: "UPDATE invocations SET payload=? WHERE id=?", arguments: [try Codec.encode(checkpoint), checkpoint.id.uuidString])
+            var updated = checkpoint
+            updated.tokenUsage = checkpoint.tokenUsage ?? old.tokenUsage
+            try db.execute(sql: "UPDATE invocations SET payload=? WHERE id=?", arguments: [try Codec.encode(updated), checkpoint.id.uuidString])
         }
     }
     public func invocations() throws -> [AgentCheckpoint] {

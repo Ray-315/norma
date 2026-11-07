@@ -100,6 +100,27 @@ public actor LocalCompute {
         request["operation"] = .string("fetch")
         return try await send(.object(request))
     }
+    public func executeGenerated(runID: UUID, proposal: ProposedExperiment, plan: ExperimentPlan, environment: EnvironmentSnapshot, expiresAt: Date) async throws -> JSONValue {
+        try proposal.validate()
+        guard plan.runnerHash == (try workerHash()) else { throw NormaError.forbidden("实验执行器已变化，请重新生成并确认方案。") }
+        guard Codec.hash(Data(proposal.python.utf8)) == plan.codeHash, try Codec.digest(proposal.data) == plan.datasetHash else { throw NormaError.forbidden("实验代码或数据与冻结方案不符。") }
+        let manifest: JSONValue = .object([
+            "mode": .string("generated"), "runID": .string(runID.uuidString), "targetID": .string("local"),
+            "expiresAt": .number(expiresAt.timeIntervalSince1970 * 1000), "runtimeSeconds": .number(30),
+            "workerHash": .string(try workerHash()), "environmentFingerprint": .string(environment.fingerprint),
+            "batch": .number(1), "seed": .number(0), "steps": .number(0), "independent": .bool(false),
+            "python": .string(proposal.python), "data": proposal.data, "metric": .string(proposal.metric),
+            "dataHash": .string(plan.datasetHash), "planHash": .string(plan.hash)
+        ])
+        let data = try Codec.encode(manifest)
+        let key = SymmetricKey(data: try Data(contentsOf: root.appendingPathComponent(".worker-key")))
+        let signature = HMAC<SHA256>.authenticationCode(for: data, using: key).map { String(format: "%02x", $0) }.joined()
+        let request: JSONValue = .object(["operation": .string("submit"), "root": .string(root.path), "manifest": .string(data.base64EncodedString()), "signature": .string(signature)])
+        let directory = root.appendingPathComponent("manifests")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+        try Codec.encode(request).write(to: directory.appendingPathComponent(runID.uuidString + ".json"), options: .withoutOverwriting)
+        return try await send(request)
+    }
     private func send(_ request: JSONValue) async throws -> JSONValue {
         let output = try await BoundedProcess.run("/usr/bin/python3", arguments: ["-I", worker.path], input: Codec.encode(request), timeout: 30)
         let value = try Codec.decode(JSONValue.self, from: output.data)

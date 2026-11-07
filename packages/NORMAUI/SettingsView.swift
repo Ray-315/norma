@@ -2,67 +2,67 @@ import SwiftUI
 struct SettingsView: View {
     @Bindable var model: AppModel
     @Environment(ThemeManager.self) private var theme
-    @State private var section = "Appearance"
+    @State private var section = "账户与模型"
     @State private var hex = ""
     @AppStorage("research.defaultModel") private var selectedModel = "gpt-6.1-sol"
     @AppStorage("research.defaultReasoning") private var reasoning = "medium"
-    private let sections = ["Accounts", "Models", "Research Defaults", "Compute Nodes", "Storage & Backup", "Security", "Advanced", "Appearance", "Environments"]
+    private let sections = ["账户与模型", "外观", "数据与备份"]
     var body: some View {
         @Bindable var theme = theme
-        Picker("Settings", selection: $section) { ForEach(sections, id: \.self) { Text($0).tag($0) } }.frame(maxWidth: 240)
+        Picker("设置分类", selection: $section) { ForEach(sections, id: \.self) { Text($0).tag($0) } }.pickerStyle(.segmented)
         switch section {
-        case "Appearance":
-            Panel("Appearance") {
-                Picker("主题", selection: $theme.mode) { Text("System").tag(ThemeMode.system); Text("Light").tag(ThemeMode.light); Text("Dark").tag(ThemeMode.dark) }.pickerStyle(.segmented)
+        case "外观":
+            Panel("外观") {
+                Picker("主题", selection: $theme.mode) { Text("跟随系统").tag(ThemeMode.system); Text("浅色").tag(ThemeMode.light); Text("深色").tag(ThemeMode.dark) }.pickerStyle(.segmented)
                 Divider()
-                Text("Accent Color").fontWeight(.medium)
+                Text("强调色").fontWeight(.medium)
                 HStack(spacing: 14) {
-                    ForEach(ThemeManager.accents, id: \.self) { value in
+                    ForEach(Array(ThemeManager.accents.enumerated()), id: \.element) { index, value in
                         Button { theme.accentHex = value } label: {
                             Circle().fill(Color(hex: value)).frame(width: 28, height: 28)
                                 .overlay { if theme.accentHex == value { Image(systemName: "checkmark").foregroundStyle(.white) } }
-                        }.buttonStyle(.plain).accessibilityLabel(value)
+                        }.buttonStyle(.plain).accessibilityLabel(["紫色", "蓝色", "青色", "绿色", "橙色", "粉色"][index])
                     }
                 }
-                ColorPicker("Custom", selection: Binding(get: { Color(hex: theme.customHex) }, set: { color in
+                ColorPicker("自定义颜色", selection: Binding(get: { Color(hex: theme.customHex) }, set: { color in
                     guard let rgb = NSColor(color).usingColorSpace(.sRGB) else { return }
                     hex = String(format: "%02X%02X%02X", Int(rgb.redComponent * 255), Int(rgb.greenComponent * 255), Int(rgb.blueComponent * 255))
                     _ = theme.saveCustom(hex)
                 }), supportsOpacity: false)
                 HStack {
-                    TextField("HEX", text: $hex).textFieldStyle(.roundedBorder).frame(width: 130)
+                    TextField("颜色代码（HEX）", text: $hex).textFieldStyle(.roundedBorder).frame(width: 160)
                     Circle().fill(Color(hex: ThemeManager.validHex(hex) ? hex : theme.accentHex)).frame(width: 22, height: 22)
-                    Button("保存") { _ = theme.saveCustom(hex) }.disabled(!ThemeManager.validHex(hex))
+                    Button("保存颜色") { _ = theme.saveCustom(hex) }.disabled(!ThemeManager.validHex(hex))
                     Spacer(); Button("恢复默认") { theme.reset(); hex = theme.customHex }
                 }
             }.onAppear { hex = theme.customHex }
-        case "Accounts":
-            Panel("Accounts") {
-                LabeledContent("ChatGPT", value: model.account?.authenticated == true ? "Connected" : "Unknown")
-                HStack { Button("Continue with ChatGPT") { model.login() }; Button("刷新") { model.checkAccount() } }
-            }
-        case "Models":
-            Panel("Models") {
-                Picker("Model", selection: $selectedModel) { ForEach(model.models) { Text($0.name).tag($0.id) } }
-                Picker("Reasoning", selection: $reasoning) {
-                    ForEach(model.models.first(where: { $0.id == selectedModel })?.reasoning ?? [], id: \.self) { Text($0).tag($0) }
+        case "账户与模型":
+            Panel("登录账户") {
+                Picker("登录方式", selection: $model.selectedProfile) { Text("ChatGPT").tag("chatgpt"); Text("API 密钥").tag("api") }
+                    .onChange(of: model.selectedProfile) { _, _ in model.account = nil; model.models = [] }
+                LabeledContent("登录状态", value: model.account?.profile == model.selectedProfile ? (model.account?.authenticated == true ? "已登录" : "未登录") : "尚未检查")
+                HStack {
+                    Button(model.selectedProfile == "chatgpt" ? "使用 ChatGPT 登录" : "输入 API 密钥") { model.showWelcome = true }
+                    Button("检查登录状态") { model.checkAccount() }
                 }
-                Button("获取模型列表") { model.loadModels() }
             }
-        case "Environments", "Compute Nodes": ComputeView(model: model)
-        case "Research Defaults":
-            Panel("paper_fidelity") {
-                ForEach([("Limitation", "16"), ("Idea rounds", "4"), ("Successful ideas", "4"), ("Engineering", "2"), ("Ablation refinement", "1"), ("Peer review", "2"), ("Meta refinement", "1")], id: \.0) { row in LabeledContent(row.0, value: row.1) }
+            Panel("默认模型") {
+                Picker("模型", selection: $selectedModel) {
+                    if !model.models.contains(where: { $0.id == selectedModel }) { Text(selectedModel).tag(selectedModel) }
+                    ForEach(model.models) { Text($0.name).tag($0.id) }
+                }
+                Picker("思考程度", selection: $reasoning) {
+                    let levels = model.models.first(where: { $0.id == selectedModel })?.reasoning ?? []
+                    if !levels.contains(reasoning) { Text(DisplayText.value(reasoning)).tag(reasoning) }
+                    ForEach(levels, id: \.self) { Text(DisplayText.value($0)).tag($0) }
+                }
+                Button("获取可用模型") { model.loadModels() }
             }
-        case "Storage & Backup":
-            Panel("Storage") {
-                Button("打开数据目录") { NSWorkspace.shared.open(FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/NORMA")) }
+        default:
+            Panel("研究数据") {
+                Button("打开数据文件夹") { NSWorkspace.shared.open(FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/NORMA")) }
                 Button("备份研究与证据") { model.backup() }
             }
-        case "Security":
-            Panel("Security") { LabeledContent("Accounts", value: "Isolated profiles"); LabeledContent("Environment", value: "Read-only discovery"); LabeledContent("External compute", value: "Existing SSH targets only") }
-        default:
-            Panel("Advanced") { LabeledContent("IPC", value: "XPC v1"); LabeledContent("Codex protocol", value: "0.160.1"); Button("刷新服务状态") { Task { await model.refresh() } } }
         }
     }
 }

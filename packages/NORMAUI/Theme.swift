@@ -64,5 +64,5 @@ struct StatusBadge: View {
         case "running", "queued": Color(hex: "4F8EF7")
         default: Color(hex: "EA965A") }
     }
-    var body: some View { Text(text).font(.system(size: 10, weight: .medium)).foregroundStyle(color).padding(.horizontal, 8).padding(.vertical, 4).background(color.opacity(0.12), in: Capsule()) }
+    var body: some View { Text(DisplayText.value(text)).font(.system(size: 10, weight: .medium)).foregroundStyle(color).padding(.horizontal, 8).padding(.vertical, 4).background(color.opacity(0.12), in: Capsule()) }
 }

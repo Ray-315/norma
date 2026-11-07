@@ -10,6 +10,11 @@ import platform
 import sys
 import time
 import importlib.metadata
+import ast
+import resource
+import subprocess
+import threading
+import signal
 from pathlib import Path
 
 VERSION = 1
@@ -51,6 +56,88 @@ def fit(points, independent=False):
         intercept = (sy - slope * sx) / n
     mse = sum((slope * x + intercept - y) ** 2 for x, y in points) / n
     return {"slope": slope, "intercept": intercept, "mse": mse}
+
+def generated_child():
+    # OS sandbox is applied by the trusted parent before accepting model code.
+    import statistics
+    import random
+    request = json.loads(sys.stdin.buffer.read(128 * 1024))
+    code = request["python"]
+    data = request["data"]
+    if not isinstance(data, list) or not 1 <= len(data) <= 5 or len(code.encode()) > 64000:
+        raise ValueError("实验超出已授权的五条数据范围")
+    tree = ast.parse(code)
+    modules = {"math": math, "statistics": statistics, "random": random}
+    forbidden = {"open", "eval", "exec", "compile", "globals", "locals", "vars", "getattr", "setattr", "delattr", "input", "breakpoint", "help", "type", "object", "super", "memoryview"}
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.ClassDef, ast.Global, ast.Nonlocal, ast.AsyncFunctionDef, ast.Await)):
+            raise ValueError("不支持此实验语法")
+        if isinstance(node, ast.Name) and (node.id.startswith("_") or node.id in forbidden):
+            raise ValueError("实验引用了未允许的功能")
+        if isinstance(node, ast.Attribute) and (node.attr.startswith("_") or node.attr in forbidden):
+            raise ValueError("实验引用了未允许的属性")
+        if isinstance(node, ast.Import) and any(n.name not in modules for n in node.names):
+            raise ValueError("仅支持 math、statistics、random 标准库")
+        if isinstance(node, ast.ImportFrom) and (node.level or node.module not in modules or any(n.name.startswith("_") or n.name == "*" for n in node.names)):
+            raise ValueError("实验导入未获准")
+    def safe_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name not in modules or level:
+            raise ValueError("实验导入未获准")
+        return modules[name]
+    safe = {name: __builtins__[name] if isinstance(__builtins__, dict) else getattr(__builtins__, name)
+            for name in ("abs", "all", "any", "bool", "dict", "enumerate", "float", "int", "len", "list", "map", "max", "min", "pow", "range", "reversed", "round", "set", "sorted", "str", "sum", "tuple", "zip", "Exception", "ValueError", "ArithmeticError")}
+    safe["__import__"] = safe_import
+    scope = {"__builtins__": safe, **modules}
+    random.seed(0)
+    resource.setrlimit(resource.RLIMIT_CPU, (10, 10))
+    resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))
+    exec(compile(tree, "experiment.py", "exec"), scope)
+    result = scope["run"](data)
+    if not isinstance(result, dict) or not 1 <= len(result) <= 20 or any(not isinstance(k, str) or len(k) > 80 or isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) for k, v in result.items()):
+        raise ValueError("实验必须返回有限数值指标字典")
+    return {"metrics": result}
+
+def run_generated(manifest):
+    # Model code gets neither authorization secrets nor access to user directories.
+    script = str(Path(__file__).resolve())
+    profile = '(version 1)(deny default)(allow process-exec)(allow sysctl-read)(allow mach-lookup)(allow signal (target self))(allow file-read-metadata)(allow file-read* (literal "/") (literal "/dev/urandom") (literal "/dev/random") (subpath "/System") (subpath "/usr") (subpath "/Library/Developer") (subpath "/Applications/Xcode.app") (subpath "/private/var/db/dyld") (literal "/dev/null") (literal ' + json.dumps(script) + '))'
+    child = subprocess.Popen(["/usr/bin/sandbox-exec", "-p", profile, sys.executable, "-I", "-B", script, "--generated-child"],
+                             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                             env={"PATH": "/usr/bin:/bin", "LANG": "zh_CN.UTF-8"})
+    stopped = threading.Event()
+    exceeded = []
+    def watch_memory():
+        while not stopped.wait(0.05):
+            measured = subprocess.run(["/bin/ps", "-o", "rss=", "-p", str(child.pid)], capture_output=True, timeout=2)
+            if measured.stdout.strip() and int(measured.stdout.strip()) > 512 * 1024:
+                exceeded.append(True)
+                child.kill()
+                return
+    watchdog = threading.Thread(target=watch_memory, daemon=True)
+    watchdog.start()
+    def terminate_child(signum, frame):
+        child.kill()
+        child.wait(timeout=3)
+        raise SystemExit(1)
+    old_handler = signal.signal(signal.SIGTERM, terminate_child)
+    try:
+        output, errors = child.communicate(canonical({"python": manifest["python"], "data": manifest["data"]}), timeout=20)
+    except subprocess.TimeoutExpired:
+        child.kill()
+        child.communicate()
+        raise ValueError("实验超过 20 秒执行上限")
+    finally:
+        stopped.set()
+        watchdog.join(timeout=3)
+        signal.signal(signal.SIGTERM, old_handler)
+    if exceeded:
+        raise ValueError("实验超过 512 MB 内存上限")
+    if child.returncode:
+        raise ValueError("受限实验执行失败：" + (output + errors).decode(errors="replace")[:2000])
+    value = json.loads(output)
+    if manifest["metric"] not in value["metrics"]:
+        raise ValueError("实验未返回约定的评价指标")
+    return value["metrics"]
 
 def main():
     request = json.loads(sys.stdin.buffer.read(1024 * 1024 + 1))
@@ -109,11 +196,14 @@ def main():
             raise ValueError("existing execution claim requires reconciliation")
         if manifest["batch"] != 1 or manifest["seed"] != 0 or manifest["steps"] != 0:
             raise ValueError("smoke budget exceeded")
-        metrics = fit(manifest["points"], manifest["independent"])
-        result = {"metrics": metrics, "samples": len(manifest["points"]), "batch": 1, "seed": 0,
+        generated = manifest.get("mode") == "generated"
+        metrics = run_generated(manifest) if generated else fit(manifest["points"], manifest["independent"])
+        result = {"metrics": metrics, "samples": len(manifest["data"] if generated else manifest["points"]), "batch": 1, "seed": 0,
                   "steps": 0, "exitCode": 0, "manifestHash": manifest_hash,
                   "workerHash": manifest["workerHash"], "environmentFingerprint": manifest["environmentFingerprint"],
                   "completedAt": time.time(), "independent": manifest["independent"]}
+        if generated:
+            result.update({"codeHash": hashlib.sha256(manifest["python"].encode()).hexdigest(), "dataHash": manifest["dataHash"], "planHash": manifest["planHash"]})
         temporary = directory / "result.pending"
         with open(temporary, "xb") as stream:
             stream.write(canonical(result))
@@ -127,7 +217,7 @@ def main():
 
 if __name__ == "__main__":
     try:
-        print(json.dumps(main(), allow_nan=False))
+        print(json.dumps(generated_child() if sys.argv[1:] == ["--generated-child"] else main(), allow_nan=False))
     except Exception as exc:
         print(json.dumps({"error": type(exc).__name__ + ": " + str(exc)}))
         sys.exit(1)

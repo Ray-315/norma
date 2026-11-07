@@ -41,6 +41,7 @@ public struct ExperimentPlan: Codable, Sendable, Identifiable {
     public var id = UUID(); public var researchID: UUID; public var contractVersion: Int
     public var kind: ExperimentKind; public var question: String; public var datasetHash: String
     public var codeHash: String; public var protocolHash: String; public var runtimeSeconds: Int
+    public var runnerHash: String?
     public var frozen = false
     public var hash: String { (try? Codec.digest(self)) ?? "" }
     public init(researchID: UUID, contractVersion: Int, kind: ExperimentKind, question: String, datasetHash: String, codeHash: String, protocolHash: String, runtimeSeconds: Int) {

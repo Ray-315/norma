@@ -3,6 +3,22 @@ import ResearchContracts
 @testable import ResearchKernel
 
 final class WorkflowTests: XCTestCase {
+    func testKnownProblemMayReportEqualResultsWithoutClaimingContribution() throws {
+        var state = WorkflowState(profile: ResearchProfile(seedCount: 2, initialCandidateCount: 1))
+        state.phase = .ablation
+        XCTAssertThrowsError(try state.apply(.knownProblemComparison(verified: true)))
+        state.knownProblem = true
+        try state.apply(.knownProblemComparison(verified: true))
+        XCTAssertEqual(state.phase, .writing)
+        XCTAssertFalse(state.priorAttributionPassed)
+    }
+    func testTextualReviewReturnsToWritingWithoutSpendingExperimentalBudget() throws {
+        var state = WorkflowState(profile: ResearchProfile(seedCount: 2, initialCandidateCount: 1))
+        state.phase = .peerReview
+        try state.apply(.peer(score: 6, empiricalObjections: false))
+        XCTAssertEqual(state.phase, .writing)
+        XCTAssertEqual(state.peerRounds, 1)
+    }
     func testSeedGenerationUsesAuthorizationBudgetNotLimitationAttemptCap() throws {
         var state = WorkflowState(profile: ResearchProfile(seedCount: 2, initialCandidateCount: 1))
         state.phase = .seeds
@@ -34,6 +50,18 @@ final class WorkflowTests: XCTestCase {
         try state.apply(.fullSet(verdict: .good, evidence: true, compliant: false))
         XCTAssertEqual(state.successes, 0)
         XCTAssertEqual(state.phase, .evolution)
+    }
+    func testAuditReportRevisionIsBoundedAndRevokesAcceptance() throws {
+        var state = WorkflowState(profile: ResearchProfile(seedCount: 2, initialCandidateCount: 1))
+        state.phase = .integrity; state.metaAccepted = true
+        XCTAssertThrowsError(try state.apply(.integrityReportRevision(evidenceIntact: false)))
+        try state.apply(.integrityReportRevision(evidenceIntact: true))
+        XCTAssertEqual(state.phase, .writing); XCTAssertFalse(state.metaAccepted)
+        XCTAssertEqual(state.reportRevisions, 1)
+        state.phase = .integrity
+        XCTAssertThrowsError(try state.apply(.integrityReportRevision(evidenceIntact: true)))
+        try state.apply(.integrity([Check("I1", .pass, ""), Check("I2", .pass, ""), Check("I3", .unknown, ""), Check("I4", .fail, "")]))
+        XCTAssertEqual(state.outcome, .integrityFailed)
     }
     func testMetaNonImprovementRetainsBestAndDoesNotAccept() throws {
         var state = WorkflowState(profile: ResearchProfile(seedCount: 1, initialCandidateCount: 1))
