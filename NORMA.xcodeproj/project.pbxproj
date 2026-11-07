@@ -524,7 +524,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_KEY_CFBundleDevelopmentRegion = zh_CN;
 				INFOPLIST_KEY_CFBundleDisplayName = NORMA;
+				INFOPLIST_KEY_CFBundleLocalizations = (
+					zh_CN,
+				);
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -540,7 +544,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_KEY_CFBundleDevelopmentRegion = zh_CN;
 				INFOPLIST_KEY_CFBundleDisplayName = NORMA;
+				INFOPLIST_KEY_CFBundleLocalizations = (
+					zh_CN,
+				);
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

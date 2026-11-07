@@ -10,17 +10,20 @@ public enum ScientificSignal: Sendable {
     case limitations(verified: Bool)
     case seeds(verifiedCount: Int)
     case baseline(reproduced: Bool)
+    case baselineFailed
     case subset(verdict: ExperimentVerdict, evidence: Bool)
     case fullSet(verdict: ExperimentVerdict, evidence: Bool, compliant: Bool)
     case nextRound(hasUntriedSeed: Bool, evolvedFromCompleteHistory: Bool)
     case selection(candidateID: UUID, fullGoodIDs: Set<UUID>)
     case ablation(attributable: Bool, needsRefinement: Bool)
+    case knownProblemComparison(verified: Bool)
     case comparison(improved: Bool, sameProtocol: Bool, evidence: Bool)
     case manuscript(evidenceComplete: Bool)
     case peer(score: Int, empiricalObjections: Bool)
     case rebuttal(experimentsComplete: Bool)
     case meta(accepted: Bool)
     case integrity([Check])
+    case integrityReportRevision(evidenceIntact: Bool)
 }
 public enum ExperimentVerdict: String, Codable, Sendable { case good, engineer, bad }
 public enum RefinementOrigin: String, Codable, Sendable { case ablation, meta }
@@ -33,6 +36,8 @@ public struct WorkflowState: Codable, Sendable {
     public var best: UUID?; public var refinementOrigin: RefinementOrigin?; public var metaAccepted = false
     public var candidatesRemaining = 0
     public var priorAttributionPassed = false
+    public var knownProblem: Bool?
+    public var reportRevisions: Int?
     public var profile: ResearchProfile
     public init(profile: ResearchProfile) { self.profile = profile }
     public mutating func apply(_ signal: ScientificSignal) throws {
@@ -52,6 +57,9 @@ public struct WorkflowState: Codable, Sendable {
         case (.seeds, .seeds(let count)):
             seedAttempts += 1
             if count >= profile.seedCount { phase = .baseline }
+        case (.baseline, .baselineFailed):
+            engineeringAttempts += 1
+            if engineeringAttempts > profile.engineeringRetries { finish(.noCandidate) }
         case (.baseline, .baseline(let reproduced)):
             guard reproduced else { throw NormaError.forbidden("Baseline reproduction required") }
             phase = .subset; engineeringAttempts = 0; candidatesRemaining = profile.initialCandidateCount
@@ -92,6 +100,9 @@ public struct WorkflowState: Codable, Sendable {
                 ablationRefinements += 1; refinementOrigin = .ablation; phase = .refinement
             } else if attributable { phase = .writing }
             else { finish(.noContribution) }
+        case (.ablation, .knownProblemComparison(let verified)):
+            guard knownProblem == true, verified else { throw NormaError.forbidden("仅已知问题验证可在复现通过后转入结果报告。") }
+            phase = .writing
         case (.refinement, .comparison(let improved, let sameProtocol, let evidence)):
             guard sameProtocol, evidence else { throw NormaError.forbidden("Comparable full-set evidence required") }
             if improved { phase = .ablation; peerRounds = 0 }
@@ -105,7 +116,7 @@ public struct WorkflowState: Codable, Sendable {
             guard (0...10).contains(score) else { throw NormaError.invalid("Invalid peer score") }
             peerRounds += 1
             if score >= profile.peerEarlyStopScore && !empirical { phase = .metaReview }
-            else if peerRounds < profile.peerRounds { phase = .rebuttal }
+            else if peerRounds < profile.peerRounds { phase = empirical ? .rebuttal : .writing }
             else { phase = .metaReview }
         case (.rebuttal, .rebuttal(let complete)):
             guard complete else { throw NormaError.forbidden("Empirical objections need actual supplementary experiments") }
@@ -116,9 +127,12 @@ public struct WorkflowState: Codable, Sendable {
             else if metaRefinements < profile.metaRefinements {
                 metaRefinements += 1; refinementOrigin = .meta; phase = .refinement
             } else { finish(.unresolvedReview) }
+        case (.integrity, .integrityReportRevision(let intact)):
+            guard intact, (reportRevisions ?? 0) < 1 else { throw NormaError.forbidden("Report revision requires intact evidence and remaining revision allowance") }
+            reportRevisions = (reportRevisions ?? 0) + 1; metaAccepted = false; phase = .writing
         case (.integrity, .integrity(let checks)):
             guard checks.count == 4, Set(checks.map(\.id)) == Set(["I1", "I2", "I3", "I4"]) else { throw NormaError.forbidden("All four integrity dimensions required") }
-            finish(checks.allSatisfy { $0.status == .pass } ? .verified : .integrityFailed)
+            finish(checks.allSatisfy { $0.status == .pass } ? (knownProblem == true ? .knownProblemVerified : .verified) : .integrityFailed)
         default: throw NormaError.invalid("Illegal scientific stage transition")
         }
     }

@@ -27,6 +27,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.norma.desktop
         INFOPLIST_KEY_CFBundleDisplayName: NORMA
+        INFOPLIST_KEY_CFBundleDevelopmentRegion: zh_CN
+        INFOPLIST_KEY_CFBundleLocalizations: [zh_CN]
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
     dependencies:
       - package: NORMA

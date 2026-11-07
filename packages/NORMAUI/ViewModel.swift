@@ -4,9 +4,13 @@ import Observation
 import ResearchContracts
 import NORMAClient
 
-public enum Page: String, CaseIterable, Identifiable {
-    case overview = "总览", workspace = "研究工作区", hypotheses = "假设树", experiments = "实验",
-         execution = "执行门禁", reviews = "评审与完整性", compute = "算力", artifacts = "文献与产物", settings = "设置"
+public enum Page: String, CaseIterable, Identifiable, Sendable {
+    case overview = "总览", workspace = "研究概况", hypotheses = "研究思路", experiments = "实验结果",
+         execution = "准备与执行", reviews = "评审与核查", compute = "算力", artifacts = "研究文件", settings = "设置"
+    static let primary: [Page] = [.overview, .workspace, .compute, .settings]
+    static let research: [Page] = [.workspace, .execution, .experiments, .hypotheses, .reviews, .artifacts]
+    var isResearch: Bool { Self.research.contains(self) }
+    var navigationTitle: String { self == .workspace ? "课题工作台" : rawValue }
     public var id: Self { self }
     var icon: String {
         switch self { case .overview: "square.grid.2x2"; case .workspace: "atom"; case .hypotheses: "point.3.connected.trianglepath.dotted"
@@ -20,7 +24,7 @@ public enum Page: String, CaseIterable, Identifiable {
     public var account: AccountStatus?; public var models: [ModelDescriptor] = []
     public var selectedProfile = "chatgpt"
     public var environment: EnvironmentSnapshot?; public var node: ComputeNode?
-    public var showInspector = true; public var showWelcome = false
+    public var showInspector = false; public var showWelcome = false
     public let client: any ResearchClientProtocol; public let demo: Bool
     public var current: ResearchSnapshot? { researches.first { $0.id == selectedID } }
     public init(client: any ResearchClientProtocol = XPCResearchClient(), demo: Bool = false) { self.client = client; self.demo = demo }
@@ -28,11 +32,11 @@ public enum Page: String, CaseIterable, Identifiable {
         do {
             researches = try await client.call("research.list", Empty(), as: [ResearchSnapshot].self)
             if selectedID == nil { selectedID = researches.first?.id }
-        } catch { self.error = error.localizedDescription }
+        } catch { self.error = DisplayText.error(error) }
     }
     public func action(_ operation: @escaping @MainActor () async throws -> Void) {
         guard !busy else { return }; busy = true; error = nil
-        Task { defer { busy = false }; do { try await operation(); await refresh() } catch { self.error = error.localizedDescription } }
+        Task { defer { busy = false }; do { try await operation(); await refresh() } catch { self.error = DisplayText.error(error) } }
     }
     public func command(_ method: String) {
         guard let state = current else { return }
@@ -97,6 +101,24 @@ public enum Page: String, CaseIterable, Identifiable {
             contract.version += 1; contract.title = title; contract.question = question
             contract.metric = metric; contract.constraints = constraints
             _ = try await self.client.call("contract.revise", ReviseCommand(contract: contract, revision: state.revision), as: ResearchSnapshot.self)
+        }
+    }
+    public func chooseSources(project: Bool) {
+        guard let state = current else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = project; panel.canChooseFiles = !project
+        panel.allowsMultipleSelection = !project
+        panel.prompt = project ? "选择项目文件夹" : "添加附件"
+        guard panel.runModal() == .OK else { return }
+        let paths = panel.urls.map(\.path)
+        action {
+            _ = try await self.client.call("sources.import", SourceImportCommand(id: state.id, revision: state.revision, paths: paths, project: project), as: ResearchSnapshot.self)
+        }
+    }
+    public func removeSource(_ sourceID: UUID) {
+        guard let state = current else { return }
+        action {
+            _ = try await self.client.call("sources.remove", SourceRemoveCommand(id: state.id, revision: state.revision, sourceID: sourceID), as: ResearchSnapshot.self)
         }
     }
     public func backup() {

@@ -21,6 +21,13 @@ worker = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(worker)
 
 class WorkerContracts(unittest.TestCase):
+    def test_generated_code_cannot_read_files_or_import_os(self):
+        for code in ["def run(data):\n    return {'x': len(open('/etc/passwd').read())}",
+                     "import os\ndef run(data):\n    return {'x': os.getpid()}",
+                     "def run(data):\n    return {'x': len(data.__class__.__mro__)}"]:
+            with self.assertRaises(ValueError):
+                worker.run_generated({"python": code, "data": [1], "metric": "x"})
+
     def test_analytic_solution_and_independent_rerun(self):
         points = [[i, 2*i+1] for i in range(5)]
         self.assertEqual(worker.fit(points), {"slope": 2.0, "intercept": 1.0, "mse": 0.0})

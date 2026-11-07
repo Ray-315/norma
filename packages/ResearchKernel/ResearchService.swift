@@ -11,16 +11,24 @@ public actor ResearchService: ResearchOrchestrating {
     public let compute: LocalCompute
     public let accounts: Accounts
     public let artifacts: ArtifactStore
-    private var running: [UUID: Task<Void, Never>] = [:]
+    var running: [UUID: Task<Void, Never>] = [:]
+    let roles: RoleCoordinator
+    private let memoryMonitor: DispatchSourceMemoryPressure
     public let root: URL
-    public init(root: URL, worker: URL) throws {
+    public init(root: URL, worker: URL, testExecutor: (@Sendable (AgentInvocation) async throws -> AgentResult)? = nil, accountRoot: URL? = nil) throws {
         self.root = root
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         store = try ResearchDatabase(path: root.appendingPathComponent("research.sqlite").path)
         compute = try LocalCompute(root: root.appendingPathComponent("worker"), worker: worker)
-        accounts = Accounts(root: root)
+        accounts = Accounts(root: accountRoot ?? root)
         artifacts = try ArtifactStore(root: root.appendingPathComponent("objects"))
+        roles = RoleCoordinator(store: store, accounts: accounts, scheduler: FairScheduler(), root: root, testExecutor: testExecutor)
+        memoryMonitor = DispatchSource.makeMemoryPressureSource(eventMask: [.normal, .warning, .critical], queue: .global(qos: .utility))
+        let monitor = memoryMonitor, coordinator = roles
+        monitor.setEventHandler { Task { await coordinator.setMemoryPressure(!monitor.data.contains(.normal)) } }
+        monitor.resume()
     }
+    deinit { memoryMonitor.setEventHandler(handler: nil); memoryMonitor.cancel() }
     public func recover() async throws {
         for var invocation in try await store.invocations() where invocation.state == .running || invocation.state == .queued {
             invocation.state = .unknown
@@ -39,14 +47,26 @@ public actor ResearchService: ResearchOrchestrating {
         guard active.count < 4 else { throw NormaError.forbidden("Maximum four active topics") }
         return try await store.create(contract).id
     }
-    public func snapshot(_ id: UUID) async throws -> ResearchSnapshot { try await store.snapshot(id) }
-    public func list() async throws -> [ResearchSnapshot] { try await store.list() }
+    public func snapshot(_ id: UUID) async throws -> ResearchSnapshot {
+        var state = try await store.snapshot(id)
+        state.tokenUsage = TokenUsageSummary(records: try await store.invocations().filter { $0.researchID == id }.compactMap(\.tokenUsage))
+        return state
+    }
+    public func list() async throws -> [ResearchSnapshot] {
+        let records = try await store.invocations()
+        return try await store.list().map { state in
+            var result = state
+            result.tokenUsage = TokenUsageSummary(records: records.filter { $0.researchID == state.id }.compactMap(\.tokenUsage))
+            return result
+        }
+    }
     public func prepareSmoke(_ command: ResearchCommand) async throws -> ResearchSnapshot {
         var state = try await store.snapshot(command.id)
         guard state.revision == command.revision, !state.operation.occupiesSlot else { throw NormaError.conflict }
+        guard state.autonomy == nil else { throw NormaError.forbidden("自主课题不能替换为内置验证。") }
         let data = Data("[[0,1],[1,3],[2,5],[3,7],[4,9]]".utf8)
         var plan = ExperimentPlan(researchID: state.id, contractVersion: state.contract.version, kind: .subset,
-            question: "Fit y=2x+1 to five points and independently reproduce the analytic solution",
+            question: NumericalSmoke.question,
             datasetHash: Codec.hash(data), codeHash: try await compute.workerHash(),
             protocolHash: Codec.hash(Data("least-squares-five-points-v1".utf8)), runtimeSeconds: 30)
         let code = try await artifacts.put(Data(contentsOf: compute.worker), kind: .code, researchID: state.id)
@@ -63,7 +83,8 @@ public actor ResearchService: ResearchOrchestrating {
         var state = try await store.snapshot(command.id)
         guard state.revision == command.revision, !state.operation.occupiesSlot, let plan = state.plan, plan.frozen else { throw NormaError.conflict }
         if state.confirmedPlanHash == plan.hash { return state }
-        state.confirmedPlanHash = plan.hash; state.selectedTargetID = nil; state.preflight = nil; state.authorization = nil
+        state.confirmedPlanHash = plan.hash; state.selectedTargetID = nil; state.preflight = nil
+        if state.autonomy == nil { state.authorization = nil }
         return try await store.update(state, expected: command.revision, kind: "plan.userConfirmed", detail: plan.hash)
     }
     public func selectLocal(_ command: ResearchCommand) async throws -> ResearchSnapshot {
@@ -71,10 +92,12 @@ public actor ResearchService: ResearchOrchestrating {
         guard state.revision == command.revision, !state.operation.occupiesSlot, let plan = state.plan,
               state.confirmedPlanHash == plan.hash else { throw NormaError.forbidden("Confirm the frozen plan before selecting a target") }
         if state.selectedTargetID == "local" { return state }
-        state.selectedTargetID = "local"; state.preflight = nil; state.authorization = nil
+        state.selectedTargetID = "local"; state.preflight = nil
+        if state.autonomy == nil { state.authorization = nil }
         return try await store.update(state, expected: command.revision, kind: "target.userSelected", detail: "local")
     }
     public func preflight(_ command: ResearchCommand) async throws -> ResearchSnapshot {
+        if try await store.snapshot(command.id).autonomy != nil { return try await preflightAutonomous(command) }
         var state = try await store.snapshot(command.id)
         guard state.revision == command.revision, !state.operation.occupiesSlot, let plan = state.plan, plan.frozen else { throw NormaError.conflict }
         guard state.confirmedPlanHash == plan.hash, state.selectedTargetID == "local" else { throw NormaError.forbidden("Plan confirmation and explicit target selection required") }
@@ -102,6 +125,7 @@ public actor ResearchService: ResearchOrchestrating {
     public func startSmoke(_ command: ResearchCommand) async throws {
         var state = try await store.snapshot(command.id)
         guard state.revision == command.revision, running[state.id] == nil, state.operation == .ready, let plan = state.plan else { throw NormaError.conflict }
+        guard state.autonomy == nil else { throw NormaError.forbidden("请使用自主研究执行入口。") }
         if state.runs.contains(where: { $0.planHash == plan.hash }) { return }
         guard plan.codeHash == (try await compute.workerHash()) else { throw NormaError.forbidden("Worker changed after plan freeze") }
         let environment = try await compute.discover()
@@ -190,11 +214,12 @@ public actor ResearchService: ResearchOrchestrating {
         state.integrity = EvidenceValidator.smoke(original: original, reproduction: reproduction)
         guard state.integrity.filter({ $0.id == "I1" || $0.id == "I2" }).allSatisfy({ $0.status == .pass }) else { throw NormaError.invalid("Numerical evidence failed verification") }
         state.phase = .finished; state.operation = .succeeded; state.outcome = .smokeVerified; state.lastError = nil
-        state.manuscript = "Known solved numerical verification: five points on y = 2x + 1. Normal equations and an independent centered-covariance rerun agree. This is a connectivity/evidence smoke, not a scientific novelty claim or full paper audit."
+        state.manuscript = NumericalSmoke.report
         _ = try await store.update(state, expected: state.revision, kind: "smoke.completed", detail: "I1/I2 verified; I3/I4 remain unknown")
         if let plan = state.plan { try await store.acknowledge(plan.id.uuidString) }
     }
     public func reconcile(_ command: ResearchCommand) async throws {
+        if try await store.snapshot(command.id).autonomy != nil { try await recoverAutonomous(command); return }
         var state = try await store.snapshot(command.id)
         guard state.revision == command.revision, state.operation == .unknown, running[state.id] == nil else { throw NormaError.conflict }
         guard let plan = state.plan else { return }
@@ -223,11 +248,18 @@ public actor ResearchService: ResearchOrchestrating {
     public func pause(_ id: UUID, expectedRevision: Int) async throws {
         var state = try await store.snapshot(id)
         guard state.revision == expectedRevision else { throw NormaError.conflict }
+        if state.autonomy != nil, state.phase != .finished {
+            state.autonomy?.requestedPause = true
+            if running[id] == nil { state.operation = .paused }
+            _ = try await store.update(state, expected: expectedRevision, kind: "research.paused", detail: "当前步骤结束后暂停")
+            return
+        }
         guard !state.operation.occupiesSlot, state.phase != .finished, state.operation != .cancelled else { throw NormaError.forbidden("Cannot pause active or terminal execution") }
         state.operation = .paused
         _ = try await store.update(state, expected: expectedRevision, kind: "research.paused", detail: "User action")
     }
     public func resume(_ id: UUID, expectedRevision: Int) async throws {
+        if try await store.snapshot(id).autonomy != nil { try await resumeAutonomous(ResearchCommand(id: id, revision: expectedRevision)); return }
         var state = try await store.snapshot(id)
         guard state.operation == .paused, state.phase != .finished else { throw NormaError.invalid("Research is not paused") }
         state.operation = .ready
@@ -246,6 +278,7 @@ public actor ResearchService: ResearchOrchestrating {
         var state = try await store.snapshot(contract.id)
         guard !state.operation.occupiesSlot, contract.version == state.contract.version + 1 else { throw NormaError.forbidden("Stop active execution before revising contract") }
         state.contract = contract; state.authorization = nil; state.plan = nil; state.preflight = nil
+        state.autonomy = nil; state.hypotheses = []; state.reviews = []; state.manuscript = ""; state.metaAccepted = false
         state.confirmedPlanHash = nil; state.selectedTargetID = nil
         state.operation = .ready; state.phase = .created; state.outcome = nil; state.integrity = []; state.exportConfirmed = false
         return try await store.update(state, expected: expected, kind: "contract.revised", detail: String(contract.version))
@@ -254,7 +287,8 @@ public actor ResearchService: ResearchOrchestrating {
         var state = try await store.snapshot(command.id)
         state.exportConfirmed = true
         guard state.exportReady else { throw NormaError.forbidden("Research has not passed the export gate") }
-        return try await store.update(state, expected: command.revision, kind: "export.userConfirmed", detail: "Contract v" + String(state.contract.version))
+        _ = try await store.update(state, expected: command.revision, kind: "export.userConfirmed", detail: "Contract v" + String(state.contract.version))
+        return try await snapshot(command.id)
     }
     public func handle(_ request: IPCRequest) async -> IPCResponse {
         do {
@@ -262,7 +296,15 @@ public actor ResearchService: ResearchOrchestrating {
             func decode<T: Decodable>(_ type: T.Type) throws -> T { try Codec.decode(type, from: request.payload) }
             let payload: Data
             switch request.method {
+            case "autonomy.start": try await startAutonomous(decode(AutonomousStart.self)); payload = try Codec.encode(Empty())
+            case "autonomy.execute": try await executeAutonomous(decode(ResearchCommand.self)); payload = try Codec.encode(Empty())
+            case "autonomy.resume": try await resumeAutonomous(decode(ResearchCommand.self)); payload = try Codec.encode(Empty())
             case "research.list": payload = try Codec.encode(await list())
+            case "sources.import": payload = try Codec.encode(await importSources(decode(SourceImportCommand.self)))
+            case "sources.remove": payload = try Codec.encode(await removeSource(decode(SourceRemoveCommand.self)))
+            case "sources.preview":
+                let state = try await store.snapshot(decode(UUID.self))
+                payload = try Codec.encode(await ResearchContextReader.read(state, artifacts: artifacts))
             case "research.create": payload = try Codec.encode(await createResearch(decode(ResearchContract.self)))
             case "research.snapshot": payload = try Codec.encode(await snapshot(decode(UUID.self)))
             case "contract.revise":
@@ -273,7 +315,7 @@ public actor ResearchService: ResearchOrchestrating {
             case "export.confirm": payload = try Codec.encode(await confirmExport(decode(ResearchCommand.self)))
             case "export.bundle":
                 let command = try decode(ResearchCommand.self)
-                let state = try await store.snapshot(command.id)
+                let state = try await snapshot(command.id)
                 guard state.revision == command.revision else { throw NormaError.conflict }
                 payload = try Codec.encode(await ResearchArchive.export(state, database: store, objects: artifacts, directory: root.appendingPathComponent("Exports")).path)
             case "smoke.prepare": payload = try Codec.encode(await prepareSmoke(decode(ResearchCommand.self)))

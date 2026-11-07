@@ -51,8 +51,8 @@ public extension ResearchClientProtocol {
 public actor MockResearchClient: ResearchClientProtocol {
     private var snapshots: [ResearchSnapshot]
     public init() {
-        var state = ResearchSnapshot(contract: ResearchContract(title: "Demo · Least squares", question: "Known solved example", metric: "MSE"))
-        state.hypotheses = [Hypothesis(title: "Analytic line fit", mechanism: "Normal equations")]
+        var state = ResearchSnapshot(contract: ResearchContract(title: "演示 · 最小二乘拟合", question: "验证直线拟合是否符合已知答案", metric: "MSE"))
+        state.hypotheses = [Hypothesis(title: "用解析方法拟合直线", mechanism: "使用正规方程求解")]
         snapshots = [state]
     }
     public func send(_ request: IPCRequest) async throws -> IPCResponse {
